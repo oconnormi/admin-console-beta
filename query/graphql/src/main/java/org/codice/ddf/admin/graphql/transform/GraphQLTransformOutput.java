@@ -74,7 +74,7 @@ public class GraphQLTransformOutput {
             new GraphQLList(fieldToGraphQLOutputType(((ListField<Field>) field).createListEntry()));
       } catch (Exception e) {
         throw new RuntimeException(
-            "Unable to build field list content type for output type: " + field.getName());
+            "Unable to build field list content type for output type: " + field.getName(), e);
       }
     } else if (field instanceof ScalarField) {
       type = transformScalar.resolveScalarType((ScalarField) field);
