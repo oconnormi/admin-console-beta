@@ -16,6 +16,7 @@ import AdminAppBar from 'admin-app-bar'
 import GraphiQL from 'admin-graphiql'
 import DevTools from 'admin-redux-devtools'
 import MuiThemeProvider from 'admin-app-bar/MuiThemeProvider'
+import Bundles from './tools/bundles'
 
 import fonts from 'webpack-fonts'
 
@@ -43,7 +44,8 @@ export const routes = {
     { path: 'ldap', component: Ldap },
     { path: 'sources', component: Sources(ddfSources) },
     { path: 'web-context-policy-manager', component: Wcpm },
-    { path: 'graphiql', component: GraphiQL }
+    { path: 'graphiql', component: GraphiQL },
+    { path: 'bundles', component: Bundles }
   ]
 }
 
