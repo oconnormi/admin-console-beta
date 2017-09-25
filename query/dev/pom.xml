@@ -62,6 +62,11 @@
             <artifactId>admin-core-api</artifactId>
             <version>${ddf.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.features</groupId>
+            <artifactId>org.apache.karaf.features.core</artifactId>
+            <version>4.1.0</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -20,6 +20,7 @@ import org.codice.ddf.admin.api.fields.FunctionField;
 import org.codice.ddf.admin.common.fields.base.function.BaseFieldProvider;
 import org.codice.ddf.admin.core.api.ConfigurationAdmin;
 import org.codice.ddf.admin.query.discover.GetBundles;
+import org.codice.ddf.admin.query.discover.GetFeatures;
 
 import com.google.common.collect.ImmutableList;
 
@@ -32,16 +33,18 @@ public class DeveloperToolsFieldProvider extends BaseFieldProvider {
     public static final String DESCRIPTION = "Awesome developer tools!";
 
     private GetBundles getBundles;
+    private GetFeatures getFeatures;
 
     public DeveloperToolsFieldProvider(ConfigurationAdmin configAdmin) {
         super(FIELD_NAME, FIELD_TYPE_NAME, DESCRIPTION);
         getBundles = new GetBundles(configAdmin);
+        getFeatures = new GetFeatures();
         updateInnerFieldPaths();
     }
 
     @Override
     public List<FunctionField> getDiscoveryFunctions() {
-        return ImmutableList.of(getBundles);
+        return ImmutableList.of(getBundles, getFeatures);
     }
 
     @Override
