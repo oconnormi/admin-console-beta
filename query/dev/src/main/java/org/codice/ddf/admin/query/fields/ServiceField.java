@@ -9,6 +9,7 @@ import org.codice.ddf.admin.common.fields.base.BaseListField;
 import org.codice.ddf.admin.common.fields.base.BaseObjectField;
 import org.codice.ddf.admin.common.fields.base.scalar.IntegerField;
 import org.codice.ddf.admin.common.fields.base.scalar.StringField;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 
 import com.google.common.collect.ImmutableList;
@@ -38,7 +39,7 @@ public class ServiceField extends BaseObjectField {
 
     public ServiceField(ServiceReference ref) {
         this();
-        name(ref.toString());
+        name(FrameworkUtil.getBundle(ServiceField.class).getBundleContext().getService(ref).toString());
         bundleId(ref.getBundle().getBundleId());
     }
 
