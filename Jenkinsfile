@@ -1,7 +1,7 @@
 //"Jenkins Pipeline is a suite of plugins which supports implementing and integrating continuous delivery pipelines into Jenkins. Pipeline provides an extensible set of tools for modeling delivery pipelines "as code" via the Pipeline DSL."
 //More information can be found on the Jenkins Documentation page https://jenkins.io/doc/
 pipeline {
-    agent none
+    agent { label 'linux-large' }
     options {
         buildDiscarder(logRotator(numToKeepStr:'25'))
         disableConcurrentBuilds()
@@ -35,7 +35,6 @@ pipeline {
             }
             parallel {
                 stage('Linux') {
-                    agent { label 'linux-large' }
                     steps {
                         withMaven(maven: 'Maven 3.5.2', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true), dependenciesFingerprintPublisher(disabled: true, includeScopeCompile: false, includeScopeProvided: false, includeScopeRuntime: false, includeSnapshotVersions: false)]) {
                             sh 'mvn install -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true -T 1C'
@@ -61,7 +60,6 @@ pipeline {
             when { expression { env.CHANGE_ID == null } }
             parallel {
                 stage('Linux') {
-                    agent { label 'linux-large' }
                     steps {
                         withMaven(maven: 'Maven 3.5.2', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}') {
                             sh 'mvn clean install -B -T 1C -pl !$ITESTS'
@@ -84,7 +82,6 @@ pipeline {
             // Add additional things like owasp later
             parallel {
                 stage('OWASP') {
-                    agent { label 'linux-large' }
                     steps {
                         echo "OWASP Scans coming soon!"
                     }
@@ -115,7 +112,6 @@ pipeline {
           It will also only deploy in the presence of an environment variable JENKINS_ENV = 'prod'. This can be passed in globally from the jenkins master node settings.
         */
         stage('Deploy') {
-            agent { label 'linux-small' }
             when {
                 allOf {
                     expression { env.CHANGE_ID == null }
