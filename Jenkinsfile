@@ -25,54 +25,51 @@ pipeline {
                 slackSend color: 'good', message: "STARTED: ${JOB_NAME} ${BUILD_NUMBER} ${BUILD_URL}"
             }
         }
-        // The incremental build will be triggered only for PRs. It will build the differences between the PR and the target branch
-        stage('Incremental Build') {
-            when {
-                allOf {
-                    expression { env.CHANGE_ID != null }
-                    expression { env.CHANGE_TARGET != null }
-                }
-            }
+        stage('Build/Test') {
             parallel {
-                stage('Linux') {
-                    steps {
-                        withMaven(maven: 'Maven 3.5.2', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true), dependenciesFingerprintPublisher(disabled: true, includeScopeCompile: false, includeScopeProvided: false, includeScopeRuntime: false, includeSnapshotVersions: false)]) {
-                            sh 'mvn install -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true -T 1C'
-                            sh 'mvn clean install -B -T 1C -pl !$ITESTS -Dgib.enabled=true -Dgib.referenceBranch=/refs/remotes/origin/$CHANGE_TARGET'
-                            sh 'mvn install -B -pl $ITESTS -nsu'
-                        }
-                    }
-                }
-                stage('Windows') {
-                    agent { label 'server-2016-large' }
-                    steps {
-                        withMaven(maven: 'Maven 3.5.2', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS}', options: [artifactsPublisher(disabled: true), dependenciesFingerprintPublisher(disabled: true, includeScopeCompile: false, includeScopeProvided: false, includeScopeRuntime: false, includeSnapshotVersions: false)]) {
-                            bat 'mvn install -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true -T 1C'
-                            bat 'mvn clean install -B -T 1C -pl !%ITESTS% -Dgib.enabled=true -Dgib.referenceBranch=/refs/remotes/origin/%CHANGE_TARGET%'
-                            bat 'mvn install -B -pl %ITESTS% -nsu'
-                        }
-                    }
-                }
-            }
-        }
-        // The full build will be run against all regular branches
-        stage('Full Build') {
-            when { expression { env.CHANGE_ID == null } }
-            parallel {
-                stage('Linux') {
+                stage('Linux Full Build') {
+                    when { expression { env.CHANGE_ID == null } }
                     steps {
                         withMaven(maven: 'Maven 3.5.2', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}') {
-                            sh 'mvn clean install -B -T 1C -pl !$ITESTS'
-                            sh 'mvn install -B -pl $ITESTS -nsu'
+                            sh 'mvn install -B -nsu'
                         }
                     }
                 }
-                stage('Windows') {
+                stage('Windows Full Build') {
+                    when { expression { env.CHANGE_ID == null } }
                     agent { label 'server-2016-large' }
                     steps {
                         withMaven(maven: 'Maven 3.5.2', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS}') {
-                            bat 'mvn clean install -B -T 1C -pl !%ITESTS%'
-                            bat 'mvn install -B -pl %ITESTS% -nsu'
+                            bat 'mvn install -B -nsu'
+                        }
+                    }
+                }
+                stage('Linux PR Build') {
+                    when {
+                        allOf {
+                            expression { env.CHANGE_ID != null }
+                            expression { env.CHANGE_TARGET != null }
+                        }
+                    }
+                    steps {
+                        withMaven(maven: 'Maven 3.5.2', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS} ${LINUX_MVN_RANDOM}', options: [artifactsPublisher(disabled: true), dependenciesFingerprintPublisher(disabled: true, includeScopeCompile: false, includeScopeProvided: false, includeScopeRuntime: false, includeSnapshotVersions: false)]) {
+                            sh 'mvn install -B -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true -nsu'
+                            sh 'mvn install -B -Dgib.enabled=true -Dgib.referenceBranch=/refs/remotes/origin/$CHANGE_TARGET -nsu'
+                        }
+                    }
+                }
+                stage('Windows PR Build') {
+                    when {
+                        allOf {
+                            expression { env.CHANGE_ID != null }
+                            expression { env.CHANGE_TARGET != null }
+                        }
+                    }
+                    agent { label 'server-2016-large' }
+                    steps {
+                        withMaven(maven: 'Maven 3.5.2', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LARGE_MVN_OPTS}', options: [artifactsPublisher(disabled: true), dependenciesFingerprintPublisher(disabled: true, includeScopeCompile: false, includeScopeProvided: false, includeScopeRuntime: false, includeSnapshotVersions: false)]) {
+                            bat 'mvn install -B -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true -nsu'
+                            bat 'mvn install -B -Dgib.enabled=true -Dgib.referenceBranch=/refs/remotes/origin/%CHANGE_TARGET% -nsu'
                         }
                     }
                 }
@@ -121,8 +118,8 @@ pipeline {
             }
             steps{
                 withMaven(maven: 'Maven 3.5.2', jdk: 'jdk8-latest', globalMavenSettingsConfig: 'default-global-settings', mavenSettingsConfig: 'codice-maven-settings', mavenOpts: '${LINUX_MVN_RANDOM}') {
-                    sh 'mvn javadoc:aggregate -B -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true'
-                    sh 'mvn deploy -B -T 1C -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true -DretryFailedDeploymentCount=10'
+                    sh 'mvn javadoc:aggregate -B -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true -nsu'
+                    sh 'mvn deploy -B -Dfindbugs.skip=true -Dpmd.skip=true -Dcheckstyle.skip=true -DskipTests=true -DretryFailedDeploymentCount=10 -nsu'
                 }
             }
         }
